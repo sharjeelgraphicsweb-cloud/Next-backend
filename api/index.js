@@ -10,6 +10,13 @@ function classifyMongoError(error) {
   const name = error && error.name ? String(error.name) : '';
   const message = String((error && error.message) || '').toLowerCase();
 
+if (name === 'MongoParseError' ||
+      message.includes('invalid connection string') ||
+      message.includes('does not have a valid hostname') ||
+      message.includes('unescaped')) {
+    return 'MONGODB_URI_INVALID';
+  }
+
   if (name === 'MongoServerError' && (message.includes('bad auth') || message.includes('authentication failed'))) {
     return 'MONGODB_AUTH_FAILED';
   }
