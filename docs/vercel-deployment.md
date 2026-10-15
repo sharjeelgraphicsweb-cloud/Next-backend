@@ -40,7 +40,10 @@ MongoDB is unreachable. Use `/api/ready` for the real signal:
 - `200` `{ "status": "ready", "database": "mongodb" }` — connected.
 - `503` — check the `error` field:
   - `MONGODB_URI_NOT_CONFIGURED` — add `MONGODB_URI`/`DB_URI` and `DB_DATABASE` to the Vercel project environment.
-  - `MONGODB_CONNECTION_FAILED` — the URI is set but Atlas is unreachable: verify the password, database user privileges, and Network Access rules from the current region.
+  - `MONGODB_AUTH_FAILED` — the URI is set but Mongo rejects the credentials. Update the Vercel `MONGODB_URI`/`DB_URI` with the same database user/password used in local `.env` (URL-encode special characters in the password). This usually means the Atlas password was rotated or the Atlas user was deleted and Vercel still holds the old value.
+  - `MONGODB_DNS_FAILED` — the hostname in the Vercel URI does not resolve; copy the exact URI from local `.env` / the Atlas connection dialog.
+  - `MONGODB_NETWORK_UNREACHABLE` — DNS works and credentials were accepted/rejected at TCP level; the cluster is unreachable from Vercel. Verify Atlas Network Access: Vercel uses many changing egress IPs, so an allowlist containing only your home IP blocks the deployed function. Allow `0.0.0.0/0` (rely on auth) or add the deployment region CIDR ranges. Note failures are often slow (server-selection timeout), while auth/DNS failures return fast.
+  - `MONGODB_CONNECTION_FAILED` — an unclassified Mongo error; inspect the Vercel function logs for the underlying `console.error` output.
 
 In the frontend Vercel project, set `BACKEND_API_BASE_URL=https://next-backend-mu-two.vercel.app/api`, then redeploy the frontend. The frontend reads this exact variable name, and Vite embeds it at build time.
 

@@ -3,6 +3,32 @@ const { connectDatabase } = require('../dist/config/db');
 
 let databaseConnection;
 
+// Coarse classification of MongoDB connection failures so the deployed
+// /api/ready response can distinguish the quickly fixable causes without
+// exposing credentials or raw internals in the public response body.
+function classifyMongoError(error) {
+  const name = error && error.name ? String(error.name) : '';
+  const message = String((error && error.message) || '').toLowerCase();
+
+  if (name === 'MongoServerError' && (message.includes('bad auth') || message.includes('authentication failed'))) {
+    return 'MONGODB_AUTH_FAILED';
+  }
+  if (message.includes('getaddrinfo') || message.includes('enotfound') || message.includes('eai_again')) {
+    return 'MONGODB_DNS_FAILED';
+  }
+  if (name === 'MongooseServerSelectionError' ||
+      message.includes('server selection timed out') ||
+      message.includes('etimedout') ||
+      message.includes('econnrefused') ||
+      message.includes('timed out')) {
+    return 'MONGODB_NETWORK_UNREACHABLE';
+  }
+  if (message.includes('timeout')) {
+    return 'MONGODB_NETWORK_UNREACHABLE';
+  }
+  return 'MONGODB_CONNECTION_FAILED';
+}
+
 module.exports = async function handler(req, res) {
   const requestUrl = req.url || '/';
   const [pathname, query = ''] = requestUrl.split('?');
@@ -52,7 +78,8 @@ module.exports = async function handler(req, res) {
       description.includes('MONGODB_URI must be configured');
     const uri = process.env.MONGODB_URI || process.env.DB_URI || '';
     const host = (uri.match(/@([^/?#]+)/) || [])[1] || '(none)';
-    console.error(`Database status - configured: ${Boolean(uri)}, host: ${host}`);
+    const errorCode = notConfigured ? 'MONGODB_URI_NOT_CONFIGURED' : classifyMongoError(error);
+    console.error(`Database status - configured: ${Boolean(uri)}, host: ${host}, code: ${errorCode}`);
 
     if (!res.headersSent) {
       // Use raw Node response methods: Express has not run yet and Vercel's
@@ -61,7 +88,7 @@ module.exports = async function handler(req, res) {
       res.setHeader('Content-Type', 'application/json');
       return res.end(JSON.stringify({
         message: 'Backend service is not ready.',
-        error: notConfigured ? 'MONGODB_URI_NOT_CONFIGURED' : 'MONGODB_CONNECTION_FAILED',
+        error: errorCode,
         detail: notConfigured
           ? description
           : `MongoDB could not be reached at ${host}.`,
@@ -69,3 +96,6 @@ module.exports = async function handler(req, res) {
     }
   }
 };
+
+module.exports.classifyMongoError = classifyMongoError;
+module.exports.connectDatabase = connectDatabase;
