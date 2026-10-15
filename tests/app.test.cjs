@@ -3,7 +3,7 @@ const { createServer } = require('node:http');
 const { after, before, test } = require('node:test');
 const bcrypt = require('bcryptjs');
 const app = require('../dist/app').default;
-const vercelHandler = require('../api/[...path].js');
+const vercelHandler = require('../api/index.js');
 const { collection } = require('../dist/data/mongo');
 const { verifyLaravelPassword } = require('../dist/data/auth');
 const { errorHandler } = require('../dist/middleware/errorHandler');
@@ -15,6 +15,9 @@ let baseUrl;
 async function requestThroughVercel(method, pathSegments = [], origin = 'http://localhost:5173') {
   const proxy = createServer((req, res) => {
     req.query = { path: pathSegments };
+    if (pathSegments.length > 0) {
+      req.url = `/api/index?path=${encodeURIComponent(pathSegments.join('/'))}`;
+    }
     void vercelHandler(req, res);
   });
   await new Promise((resolve) => proxy.listen(0, resolve));
@@ -111,6 +114,7 @@ test('Vercel catch-all returns OK when the configured CORS origin does not match
   );
 
   assert.equal(response.status, 200);
+  assert.equal(response.headers.get('access-control-allow-origin'), null);
 });
 
 test('readiness endpoint reports disconnected MongoDB without claiming readiness', async () => {

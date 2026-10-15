@@ -1,8 +1,8 @@
 # Vercel deployment
 
-Import the `backend2` directory as its own Vercel project, or set the Vercel project's Root Directory to `backend2`. The included `vercel.json` builds the TypeScript app and routes `/api/*` requests through the serverless Express handler.
+Import the `backend2` directory as its own Vercel project, or set the Vercel project's Root Directory to `backend2`. The included `vercel.json` builds the TypeScript app and rewrites `/api/*` requests to the shared serverless Express handler.
 
-The backend root URL (`/`) and `/api/health` return a health response. The catch-all handler restores nested API paths from Vercel's route parameter when needed, including `OPTIONS` preflight requests.
+The backend root URL (`/`) and `/api/health` return a health response. The shared handler restores nested API paths from the rewrite parameter, including `OPTIONS` preflight requests.
 
 Configure these backend project environment variables in Vercel:
 

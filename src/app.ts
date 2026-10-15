@@ -47,6 +47,7 @@ app.use(
   cors({
     origin: env.CORS_ORIGIN,
     credentials: true,
+    preflightContinue: true,
   }),
 );
 app.options('*', (_req, res) => {

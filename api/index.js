@@ -13,8 +13,11 @@ module.exports = async function handler(req, res) {
       ? routePath.split('/').filter(Boolean)
       : [];
 
-  if (pathname === '/' && routeSegments.length > 0) {
-    req.url = `/api/${routeSegments.map(encodeURIComponent).join('/')}${query ? `?${query}` : ''}`;
+  if (routeSegments.length > 0) {
+    const forwardedQuery = new URLSearchParams(query);
+    forwardedQuery.delete('path');
+    const queryString = forwardedQuery.toString();
+    req.url = `/api/${routeSegments.map(encodeURIComponent).join('/')}${queryString ? `?${queryString}` : ''}`;
   } else if (pathname === '/' && !routeSegments.length) {
     req.url = `/api/health${query ? `?${query}` : ''}`;
   } else if (pathname === '/api' || pathname.startsWith('/api/')) {
