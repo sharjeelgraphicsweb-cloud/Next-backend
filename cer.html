@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Career Certificate</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Open+Sans:wght@300;400;600&display=swap');
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #eee;
+        }
+
+        .certificate-container {
+            width: 1000px;
+            height: 707px;
+            background: #fff;
+            position: relative;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        /* Full border with small squares at corners */
+        .main-border {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            border: 2px solid #ccc;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .main-border::before, .main-border::after,
+        .corner-bottom-left, .corner-bottom-right {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border: 2px solid #ccc;
+            background-color: white;
+            z-index: 11;
+        }
+        .main-border::before { top: -6px; left: -6px; } /* Top-left */
+        .main-border::after { top: -6px; right: -6px; } /* Top-right */
+        .corner-bottom-left { bottom: -6px; left: -6px; }
+        .corner-bottom-right { bottom: -6px; right: -6px; }
+
+        /* Subtle wavy line background pattern */
+        .certificate-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(90deg, #f8f8f8 .1px, transparent .1px),
+                linear-gradient(#f8f8f8 .1px, transparent .1px);
+            background-size: 30px 30px;
+            opacity: 0.1;
+            transform: skewY(5deg);
+            z-index: 1;
+        }
+
+        /* Right grey banner */
+        .right-banner {
+            position: absolute;
+            top: 0;
+            right: 15%;
+            width: 25%;
+            height: 100%;
+            background-color: #d8dee6;
+            z-index: 2;
+        }
+        .right-banner::after {
+            content: "";
+            position: absolute;
+            bottom: -50px;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background-color: #d8dee6;
+            transform: skewY(-15deg);
+        }
+
+        /* General layout inside certificate */
+        .content-container {
+            position: absolute;
+            top: 60px;
+            left: 80px;
+            right: 80px;
+            bottom: 60px;
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Top left items */
+        .left-content {
+            flex: 2;
+            padding-right: 300px; /* Space for banner */
+        }
+
+        .google-logo-img {
+            height: 110px;
+            width: auto;
+            margin-bottom: 50px;
+        }
+
+        .date-text {
+            color: #6a7681;
+            font-size: 14px;
+            font-weight: 300;
+            margin-bottom: 25px;
+        }
+
+        .recipient-name {
+            font-family: 'Merriweather', serif;
+            font-weight: 400;
+            font-size: 36px;
+            color: #3e4a55;
+            margin-bottom: 20px;
+        }
+
+        .helper-text-line1 {
+            color: #8c98a3;
+            font-size: 13px;
+            font-weight: 300;
+            margin-bottom: 12px;
+        }
+
+        .course-title {
+            font-family: 'Merriweather', serif;
+            font-weight: 300;
+            font-size: 20px;
+            color: #55616d;
+            margin-bottom: 12px;
+        }
+
+        .helper-text-line2 {
+            color: #8c98a3;
+            font-size: 13px;
+            font-weight: 300;
+            margin-bottom: 60px;
+        }
+
+        /* Signature area */
+        .signature-container {
+            margin-top: 10px;
+        }
+        .signature-img {
+            height: 50px;
+            width: auto;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 5px;
+        }
+        .signature-details {
+            font-size: 11px;
+            color: #8c98a3;
+            line-height: 1.4;
+        }
+
+        /* Right banner content */
+        .banner-content {
+            position: absolute;
+            top: 80px;
+            right: 17%;
+            width: 21%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #3e4a55;
+            z-index: 20;
+        }
+
+        .course-cert-text {
+            font-size: 16px;
+            letter-spacing: 2px;
+            text-align: center;
+            font-weight: 300;
+            margin-bottom: 150px;
+        }
+
+        /* Coursera circular seal */
+        .coursera-seal {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-top: -50px;
+        }
+
+        .seal-logo-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70px;
+            height: 70px;
+            z-index: 10;
+        }
+
+        .seal-text {
+            font-size: 10px;
+            color: #3e4a55;
+            text-transform: uppercase;
+            font-family: 'Open Sans', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        /* Bottom right content */
+        .bottom-right-details {
+            position: absolute;
+            bottom: 60px;
+            right: 80px;
+            text-align: right;
+            color: #6a7681;
+            font-size: 10px;
+            width: 280px;
+            line-height: 1.5;
+            z-index: 15;
+        }
+        .verify-at {
+            margin-bottom: 5px;
+        }
+        .verify-url {
+            color: #3e63b6;
+            text-decoration: underline;
+            font-size: 11px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="certificate-container">
+        <div class="main-border">
+            <div class="corner-bottom-left"></div>
+            <div class="corner-bottom-right"></div>
+        </div>
+        <div class="right-banner"></div>
+
+        <div class="content-container">
+            <div class="left-content">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google Logo" class="google-logo-img">
+                <div class="date-text">Sep 3, 2024</div>
+                <div class="recipient-name">Aneeza Mukhtiar</div>
+                <div class="helper-text-line1">has successfully completed</div>
+                <div class="course-title">Think Outside the Inbox: Email Marketing</div>
+                <div class="helper-text-line2">an online non-credit course authorized by Google and offered through Coursera</div>
+
+                <div class="signature-container">
+                    <img src="https://signature.calligraphypro.com/samples/png/williams-f29.png" alt="Amanda Brophy Signature" class="signature-img">
+                    <div class="signature-details">
+                        Amanda Brophy<br>
+                        Global Director of Google Career Certificates
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="banner-content">
+            <div class="course-cert-text">COURSE<br>CERTIFICATE</div>
+            <div class="coursera-seal">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/9/97/Coursera_logo.svg" alt="Coursera Logo" class="seal-logo-img">
+                <svg width="120" height="120" class="seal-text">
+                    <defs>
+                        <path id="circlePath" d="M 60, 60 m -50, 0 a 50,50 0 1,1 100,0 a 50,50 0 1,1 -100,0" />
+                    </defs>
+                    <text font-size="10" fill="#3e4a55">
+                        <textPath href="#circlePath" startOffset="0%">
+                            &#8226; EDUCATION FOR EVERYONE &#8226; COURSE CERTIFICATE
+                        </textPath>
+                    </text>
+                </svg>
+            </div>
+        </div>
+
+        <div class="bottom-right-details">
+            <div class="verify-at">Verify at:</div>
+            <a href="https://coursera.org/verify/UEDCFFY1ZVA5" class="verify-url">https://coursera.org/verify/UEDCFFY1ZVA5</a>
+            <div class="coursera-confirmation">
+                Coursera has confirmed the identity of this individual and their<br>
+                participation in the course.
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
