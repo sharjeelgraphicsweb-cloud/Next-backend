@@ -45,13 +45,20 @@ const authLimiter = rateLimit({
 
 app.use(
   cors({
-    origin: env.CORS_ORIGIN,
+    origin(origin, callback) {
+      // Reflect the configured frontend only for matching browser origins.
+      // Non-browser requests (no Origin) are allowed without an ACAO header.
+      if (!origin || origin === env.CORS_ORIGIN) {
+        return callback(null, env.CORS_ORIGIN);
+      }
+      return callback(null, false);
+    },
     credentials: true,
     preflightContinue: true,
   }),
 );
 app.options('*', (_req, res) => {
-  res.sendStatus(200);
+  res.sendStatus(204);
 });
 
 app.use(helmet({ crossOriginResourcePolicy: false }));

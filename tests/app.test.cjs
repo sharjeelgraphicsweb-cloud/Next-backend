@@ -13,10 +13,15 @@ let server;
 let baseUrl;
 
 async function requestThroughVercel(method, pathSegments = [], origin = 'http://localhost:5173') {
+  const normalizedPathSegments = Array.isArray(pathSegments)
+    ? pathSegments
+    : typeof pathSegments === 'string'
+      ? pathSegments.split('/').filter(Boolean)
+      : [];
   const proxy = createServer((req, res) => {
-    req.query = { path: pathSegments };
-    if (pathSegments.length > 0) {
-      req.url = `/api/index?path=${encodeURIComponent(pathSegments.join('/'))}`;
+    req.query = { path: normalizedPathSegments };
+    if (normalizedPathSegments.length > 0) {
+      req.url = `/api/index?path=${encodeURIComponent(normalizedPathSegments.join('/'))}`;
     }
     void vercelHandler(req, res);
   });
@@ -113,7 +118,7 @@ test('Vercel catch-all returns OK when the configured CORS origin does not match
     'https://next-frontend-iota-smoky.vercel.app',
   );
 
-  assert.equal(response.status, 200);
+  assert.equal(response.status, 204);
   assert.equal(response.headers.get('access-control-allow-origin'), null);
 });
 

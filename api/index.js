@@ -46,8 +46,26 @@ module.exports = async function handler(req, res) {
     return app(req, res);
   } catch (error) {
     console.error('Failed to initialize backend request:', error);
+    const description = String((error && error.message) || 'unknown database error');
+    const notConfigured =
+      (typeof error === 'object' && error !== null && error.name === 'MissingMongoUriError') ||
+      description.includes('MONGODB_URI must be configured');
+    const uri = process.env.MONGODB_URI || process.env.DB_URI || '';
+    const host = (uri.match(/@([^/?#]+)/) || [])[1] || '(none)';
+    console.error(`Database status - configured: ${Boolean(uri)}, host: ${host}`);
+
     if (!res.headersSent) {
-      return res.status(503).json({ message: 'Backend service is not ready.' });
+      // Use raw Node response methods: Express has not run yet and Vercel's
+      // node-bridge also honors statusCode/end on the provided response.
+      res.statusCode = 503;
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify({
+        message: 'Backend service is not ready.',
+        error: notConfigured ? 'MONGODB_URI_NOT_CONFIGURED' : 'MONGODB_CONNECTION_FAILED',
+        detail: notConfigured
+          ? description
+          : `MongoDB could not be reached at ${host}.`,
+      }));
     }
   }
 };
