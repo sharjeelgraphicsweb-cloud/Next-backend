@@ -4,7 +4,9 @@ import path from 'path';
 import multer from 'multer';
 import { env } from '../config/env';
 
-export const uploadDirectory = path.resolve(process.cwd(), 'storage', 'uploads');
+export const uploadDirectory = process.env.VERCEL
+  ? path.join('/tmp', 'nextstep-uploads')
+  : path.resolve(process.cwd(), 'storage', 'uploads');
 fs.mkdirSync(uploadDirectory, { recursive: true });
 
 const storage = multer.diskStorage({

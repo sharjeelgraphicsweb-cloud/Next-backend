@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npm run build",
+  "functions": {
+    "api/[...path].js": {
+      "includeFiles": "dist/**"
+    }
+  }
+}
