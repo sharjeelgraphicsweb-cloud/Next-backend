@@ -1,6 +1,8 @@
 # Vercel deployment
 
-Import this backend directory as its own Vercel project. The included `vercel.json` builds the TypeScript app and routes `/api/*` requests through the serverless Express handler.
+Import the `backend2` directory as its own Vercel project, or set the Vercel project's Root Directory to `backend2`. The included `vercel.json` builds the TypeScript app and routes `/api/*` requests through the serverless Express handler.
+
+The backend root URL (`/`) and `/api/health` return a health response. The catch-all handler restores nested API paths from Vercel's route parameter when needed, including `OPTIONS` preflight requests.
 
 Configure these backend project environment variables in Vercel:
 
@@ -10,6 +12,6 @@ Configure these backend project environment variables in Vercel:
 - `BACKEND_PUBLIC_URL=https://next-backend-mu-two.vercel.app`
 - Any required provider credentials, such as `GEMINI_API_KEY`
 
-In the frontend Vercel project, set `VITE_API_BASE_URL=https://next-backend-mu-two.vercel.app/api`, then redeploy the frontend. Vite variables are embedded at build time, so changing this value requires a new deployment.
+In the frontend Vercel project, set `BACKEND_API_BASE_URL=https://next-backend-mu-two.vercel.app/api`, then redeploy the frontend. The frontend reads this exact variable name, and Vite embeds it at build time.
 
 Uploaded files use Vercel's temporary `/tmp` storage and are not durable across function instances. Use persistent object storage for production uploads.

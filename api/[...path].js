@@ -4,9 +4,28 @@ const { connectDatabase } = require('../dist/config/db');
 let databaseConnection;
 
 module.exports = async function handler(req, res) {
-  const requestPath = req.url || '/';
-  if (!requestPath.startsWith('/api/')) {
-    req.url = `/api${requestPath.startsWith('/') ? '' : '/'}${requestPath}`;
+  const requestUrl = req.url || '/';
+  const [pathname, query = ''] = requestUrl.split('?');
+  const routePath = req.query && req.query.path;
+  const routeSegments = Array.isArray(routePath)
+    ? routePath
+    : typeof routePath === 'string'
+      ? routePath.split('/').filter(Boolean)
+      : [];
+
+  if (pathname === '/' && routeSegments.length > 0) {
+    req.url = `/api/${routeSegments.map(encodeURIComponent).join('/')}${query ? `?${query}` : ''}`;
+  } else if (pathname === '/' && !routeSegments.length) {
+    req.url = `/api/health${query ? `?${query}` : ''}`;
+  } else if (pathname === '/api' || pathname.startsWith('/api/')) {
+    req.url = `${pathname}${query ? `?${query}` : ''}`;
+  } else {
+    req.url = `/api${pathname.startsWith('/') ? '' : '/'}${pathname}${query ? `?${query}` : ''}`;
+  }
+  req.originalUrl = req.url;
+
+  if (req.method === 'OPTIONS') {
+    return app(req, res);
   }
 
   if (req.url.split('?')[0] === '/api/health') {

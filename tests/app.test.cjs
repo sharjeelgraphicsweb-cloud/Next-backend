@@ -1,7 +1,9 @@
 const assert = require('node:assert/strict');
+const { createServer } = require('node:http');
 const { after, before, test } = require('node:test');
 const bcrypt = require('bcryptjs');
 const app = require('../dist/app').default;
+const vercelHandler = require('../api/[...path].js');
 const { collection } = require('../dist/data/mongo');
 const { verifyLaravelPassword } = require('../dist/data/auth');
 const { errorHandler } = require('../dist/middleware/errorHandler');
@@ -9,6 +11,30 @@ const { ResumeImprovementError, SkillGapAnalysisError } = require('../dist/servi
 
 let server;
 let baseUrl;
+
+async function requestThroughVercel(method, pathSegments = []) {
+  const proxy = createServer((req, res) => {
+    req.query = { path: pathSegments };
+    void vercelHandler(req, res);
+  });
+  await new Promise((resolve) => proxy.listen(0, resolve));
+  const proxyBaseUrl = `http://127.0.0.1:${proxy.address().port}`;
+
+  try {
+    return await fetch(proxyBaseUrl, {
+      method,
+      headers: method === 'OPTIONS'
+        ? {
+            Origin: 'http://localhost:5173',
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'content-type,authorization',
+          }
+        : {},
+    });
+  } finally {
+    await new Promise((resolve, reject) => proxy.close((error) => error ? reject(error) : resolve()));
+  }
+}
 
 before(async () => {
   server = app.listen(0);
@@ -28,6 +54,53 @@ test('health endpoint preserves Laravel-compatible response fields', async () =>
   assert.equal(body.status, 'ok');
   assert.equal(body.database, 'mongodb');
   assert.equal(typeof body.timestamp, 'string');
+});
+
+test('root endpoint confirms the backend is running', async () => {
+  const response = await fetch(`${baseUrl}/`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.status, 'ok');
+});
+
+test('Vercel root request is mapped to the health endpoint', async () => {
+  const response = await requestThroughVercel('GET');
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.status, 'ok');
+});
+
+test('login preflight allows requests from the configured frontend', async () => {
+  const response = await fetch(`${baseUrl}/api/auth/login`, {
+    method: 'OPTIONS',
+    headers: {
+      Origin: 'http://localhost:5173',
+      'Access-Control-Request-Method': 'POST',
+      'Access-Control-Request-Headers': 'content-type,authorization',
+    },
+  });
+
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get('access-control-allow-origin'), 'http://localhost:5173');
+  assert.match(response.headers.get('access-control-allow-methods'), /POST/);
+  assert.equal(
+    response.headers.get('access-control-allow-headers'),
+    'content-type,authorization',
+  );
+});
+
+test('Vercel catch-all restores nested paths for login preflight', async () => {
+  const response = await requestThroughVercel('OPTIONS', 'auth/login');
+
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get('access-control-allow-origin'), 'http://localhost:5173');
+  assert.match(response.headers.get('access-control-allow-methods'), /POST/);
+  assert.equal(
+    response.headers.get('access-control-allow-headers'),
+    'content-type,authorization',
+  );
 });
 
 test('readiness endpoint reports disconnected MongoDB without claiming readiness', async () => {

@@ -23,6 +23,13 @@ import { uploadDirectory } from './middleware/uploads';
 const app = express();
 if (env.NODE_ENV === 'production') app.set('trust proxy', 1);
 
+app.get('/', (_req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Backend API is running',
+  });
+});
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 300,
