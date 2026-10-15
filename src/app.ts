@@ -49,6 +49,9 @@ app.use(
     credentials: true,
   }),
 );
+app.options('*', (_req, res) => {
+  res.sendStatus(200);
+});
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json({ limit: '2mb' }));

@@ -12,7 +12,7 @@ const { ResumeImprovementError, SkillGapAnalysisError } = require('../dist/servi
 let server;
 let baseUrl;
 
-async function requestThroughVercel(method, pathSegments = []) {
+async function requestThroughVercel(method, pathSegments = [], origin = 'http://localhost:5173') {
   const proxy = createServer((req, res) => {
     req.query = { path: pathSegments };
     void vercelHandler(req, res);
@@ -25,7 +25,7 @@ async function requestThroughVercel(method, pathSegments = []) {
       method,
       headers: method === 'OPTIONS'
         ? {
-            Origin: 'http://localhost:5173',
+            Origin: origin,
             'Access-Control-Request-Method': 'POST',
             'Access-Control-Request-Headers': 'content-type,authorization',
           }
@@ -101,6 +101,16 @@ test('Vercel catch-all restores nested paths for login preflight', async () => {
     response.headers.get('access-control-allow-headers'),
     'content-type,authorization',
   );
+});
+
+test('Vercel catch-all returns OK when the configured CORS origin does not match', async () => {
+  const response = await requestThroughVercel(
+    'OPTIONS',
+    'auth/login',
+    'https://next-frontend-iota-smoky.vercel.app',
+  );
+
+  assert.equal(response.status, 200);
 });
 
 test('readiness endpoint reports disconnected MongoDB without claiming readiness', async () => {
